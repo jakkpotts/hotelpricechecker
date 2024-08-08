@@ -21,7 +21,7 @@ chrome_options.add_argument(f'user-agent={user_agent}')
 
 # Initialize the Chrome driver
 driver = uc.Chrome(
-    headless=True,  # Ensure headless mode is enabled
+    headless=True,
     use_subprocess=True,
     options=chrome_options
 )
@@ -37,6 +37,7 @@ stealth(driver,
         )
 
 # Generate dates for the URL
+# standard today as the arrival date and two days later as the departure date
 today = datetime.datetime.today()
 two_days_later = today + datetime.timedelta(days=2)
 today_str = today.strftime("%m/%d/%Y")
@@ -45,22 +46,24 @@ two_days_later_str = two_days_later.strftime("%m/%d/%Y")
 # Construct the URL with the dates
 url_template = "https://www.caesars.com/book/hotel-list?arrivalDate=__TODAY__&departureDate=__TWODAYSLATER__&dateSearchFormat=exact-dates&propCode=lvm"
 search_url = url_template.replace("__TODAY__", today_str).replace("__TWODAYSLATER__", two_days_later_str)
+
+# Debug
 print(search_url)
 
 # Navigate to the search URL
 driver.get(search_url)
 
-# Introduce random delay
+# Introduce random delay for bot detection avoidance
+# and to ensure the JavaScript content has loaded
 time.sleep(random.uniform(1, 6))
 
-# Get the page source after ensuring the JavaScript content has loaded
 html_string = driver.page_source
 
-# Print part of the page source for debugging
+# Print page source for debugging
 # print("Page source:\n", html_string)  # Adjusted to show the beginning of the HTML
 
 # Parse the HTML, sleep
-time.sleep(random.uniform(1, 6))
+time.sleep(random.uniform(1, 3))
 soup = BeautifulSoup(html_string, 'html.parser')
 
 # Find all article elements
@@ -76,10 +79,11 @@ for article in articles:
     h1 = article.find('h1')
     h4 = article.find('h4')
     if h1 and h4:
+        # Debug
         # print(f"{h4.text.strip()} -- {h1.text.strip()}")
         hotels.append({"hotel_name": h4.text.strip(), "room_price": h1.text.strip()})
     else:
-        # Debugging statement
+        # Debug
         # print("h1 or h4 not found in article")
         pass
 for hotel in hotels:
